@@ -11,6 +11,9 @@ const inter = Inter({subsets: ["latin"]});
 export const metadata: Metadata = {
   title: "PassKeep",
   description: "Zero Knowledge Password Manager",
+  icons: {
+    icon: "icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -21,7 +24,7 @@ export default function RootLayout({
       <body className="{inter.className}">
         <VaultProvider>
           {children}
-          <Toaster />
+          <Toaster richColors position="top-center" theme="light"/>
         </VaultProvider>
       </body>
     </html>
