@@ -1,13 +1,11 @@
-
-
 'use client'
 
 import { useState } from "react"
-import {Button} from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
+import { toast } from "sonner" // <--- Matches your layout.tsx
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
 import { hashPassword, generateSalt } from "@/lib/crypto"
@@ -20,8 +18,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
-  const {setMasterKey} = useVault()
-
+  const { setMasterKey } = useVault()
 
   const handleAuth = async () => {
     setLoading(true)
@@ -78,7 +75,6 @@ export default function AuthPage() {
 
         // A. Generate a new random Salt
         const newSalt = generateSalt();
-        console.log("3. New Salt generated:", newSalt);
 
         // B. Register the user with Supabase
         const { data, error } = await supabase.auth.signUp({
@@ -88,6 +84,7 @@ export default function AuthPage() {
             data: {
               encryption_salt: newSalt, // Save the Salt publically
             },
+            emailRedirectTo: `${window.location.origin}/`,
           },
         })
 
@@ -97,9 +94,15 @@ export default function AuthPage() {
         }
 
         console.log("4. Signup Success!", data);
-        toast.success("Account created! You can now log in.");
         
-        // Optional: Switch to Login view automatically
+        // --- IMPROVED ALERT ---
+        toast.success("Signup successful!", {
+            description: "Please check your email to confirm your account before logging in.",
+            duration: 6000, 
+        });
+        
+        // Clear password and switch to login mode
+        setPassword('');
         setIsLogin(true);
       }
 
@@ -110,8 +113,9 @@ export default function AuthPage() {
       setLoading(false)
     }
   }
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
@@ -121,9 +125,12 @@ export default function AuthPage() {
             {isLogin ? "Enter Credentials to decrypt your Data." : "Set a Master Password."}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space=-y-4">
+        
+        {/* Fixed typo: space-y-4 instead of space=-y-4 */}
+        <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email"></Label>
+            {/* Added Label Text */}
+            <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -137,7 +144,7 @@ export default function AuthPage() {
             <Input
               id="password"
               type="password"
-              placeholder="........."
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               />
@@ -155,23 +162,6 @@ export default function AuthPage() {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
