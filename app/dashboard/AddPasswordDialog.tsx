@@ -42,16 +42,13 @@ export function AddPasswordDialog({ onPasswordAdded }: Props) {
     setLoading(true)
 
     try {
-      // 1. Prepare the Secret Package
       const secretPayload = JSON.stringify({
         username: username,
         password: password
       })
 
-      // 2. Encrypt it using the Master Key (Client-Side Only!)
       const { encrypted, iv } = encryptData(secretPayload, masterKey)
 
-      // 3. Send ONLY the encrypted blob to Supabase
       const { error } = await supabase.from('vault_items').insert({
         site_name: siteName,
         site_url: siteUrl,
@@ -61,16 +58,14 @@ export function AddPasswordDialog({ onPasswordAdded }: Props) {
 
       if (error) throw error
 
-      toast.success("Password saved securely!")
+      toast.success("Password Encrypted & Saved")
       setOpen(false)
       
-      // Reset form
       setSiteName('')
       setSiteUrl('')
       setUsername('')
       setPassword('')
       
-      // Refresh the list
       onPasswordAdded()
 
     } catch (error: any) {
@@ -83,65 +78,69 @@ export function AddPasswordDialog({ onPasswordAdded }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full md:w-auto"><Plus className="mr-2 h-4 w-4" /> Add Password</Button>
+        <Button className="w-full md:w-auto bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(8,145,178,0.5)] border-none">
+            <Plus className="mr-2 h-4 w-4" /> Add Entry
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-106.25">
+      {/* DARK MODE DIALOG CONTENT */}
+      <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800 text-slate-100">
         <DialogHeader>
-          <DialogTitle>Add New Password</DialogTitle>
-          <DialogDescription>
-            This will be encrypted in your browser before being sent to the database.
+          <DialogTitle className="text-xl font-bold text-white">Add New Entry</DialogTitle>
+          <DialogDescription className="text-slate-400">
+            Data is encrypted locally before transmission.
           </DialogDescription>
         </DialogHeader>
         
-        {/* MOBILE FRIENDLY: Stacked Inputs */}
         <div className="flex flex-col gap-4 py-4">
-          
           <div className="space-y-2">
-            <Label htmlFor="site">Site Name</Label>
+            <Label htmlFor="site" className="text-slate-300">Site Name</Label>
             <Input
               id="site"
-              placeholder="Netflix"
+              placeholder="e.g. Netflix"
+              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 focus-visible:ring-cyan-500"
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="url">URL</Label>
+            <Label htmlFor="url" className="text-slate-300">URL</Label>
             <Input
               id="url"
-              placeholder="netflix.com"
+              placeholder="e.g. netflix.com"
+              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 focus-visible:ring-cyan-500"
               value={siteUrl}
               onChange={(e) => setSiteUrl(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username" className="text-slate-300">Username</Label>
             <Input
               id="username"
               placeholder="email@example.com"
+              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 focus-visible:ring-cyan-500"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-slate-300">Password</Label>
             <Input
               id="password"
-              type="text" // Visible so user can see what they type before saving
+              type="text" 
               placeholder="Secret123"
+              className="bg-slate-950 border-slate-700 text-white placeholder:text-slate-600 focus-visible:ring-cyan-500 font-mono"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-
         </div>
 
         <DialogFooter>
-          <Button type="submit" onClick={handleSave} disabled={loading} className="w-full">
-            {loading ? "Encrypting..." : "Save Password"}
+          <Button type="submit" onClick={handleSave} disabled={loading} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white">
+            {loading ? "Encrypting..." : "Save to Vault"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Copy, Trash2, Eye, EyeOff, LogOut, Search } from 'lucide-react'
+import { Copy, Trash2, Eye, EyeOff, LogOut, Search, ShieldCheck } from 'lucide-react'
 import { AddPasswordDialog } from './AddPasswordDialog'
 
 interface VaultItem {
@@ -29,7 +29,6 @@ export default function Dashboard() {
   const [revealedIds, setRevealedIds] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
 
-  // 1. SECURITY CHECK: If no Master Key in memory, kick them out.
   useEffect(() => {
     if (!masterKey) {
       router.push('/')
@@ -38,7 +37,6 @@ export default function Dashboard() {
     }
   }, [masterKey, router])
 
-  // 2. Fetch Data (Only gets encrypted blobs)
   const fetchVaultItems = async () => {
     try {
       const { data, error } = await supabase
@@ -55,7 +53,6 @@ export default function Dashboard() {
     }
   }
 
-  // 3. Helper to Decrypt on the fly
   const getDecryptedPassword = (item: VaultItem) => {
     if (!masterKey) return "Error";
     try {
@@ -78,7 +75,6 @@ export default function Dashboard() {
     }
   }
 
-  // 4. Toggle "Eye" icon
   const toggleReveal = (id: string) => {
     const newRevealed = new Set(revealedIds)
     if (newRevealed.has(id)) newRevealed.delete(id)
@@ -86,19 +82,17 @@ export default function Dashboard() {
     setRevealedIds(newRevealed)
   }
 
-  // 5. Copy to Clipboard
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     toast.success("Copied to clipboard!")
   }
 
   const handleLogout = async () => {
-      setMasterKey(null); // Wipe memory
+      setMasterKey(null);
       await supabase.auth.signOut();
       router.push('/');
   }
 
-  // Filter items based on search
   const filteredItems = items.filter(item => 
     item.site_name.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -106,49 +100,66 @@ export default function Dashboard() {
   if (!masterKey) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    // CYBER BACKGROUND
+    <div className="min-h-screen bg-slate-950 p-4 md:p-8 font-sans text-slate-200">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-3xl font-bold text-gray-900">My Vault</h1>
-          <div className="flex gap-2 w-full md:w-auto">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 border-b border-slate-800 pb-6">
+          <div className="flex items-center gap-3">
+             <ShieldCheck className="w-10 h-10 text-cyan-500" />
+             <div>
+                <h1 className="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 font-[family-name:var(--font-orbitron)]">
+                  VAULT DASHBOARD
+                </h1>
+                <p className="text-xs text-slate-500 tracking-[0.2em] uppercase">Secure Uplink Established</p>
+             </div>
+          </div>
+
+          <div className="flex gap-3 w-full md:w-auto">
              <div className="flex-1 md:flex-none">
                 <AddPasswordDialog onPasswordAdded={fetchVaultItems} />
              </div>
-             <Button variant="outline" onClick={handleLogout}><LogOut className="h-4 w-4 mr-2"/> Lock</Button>
+             <Button 
+                variant="outline" 
+                onClick={handleLogout} 
+                className="border-red-900/50 text-red-400 hover:bg-red-950 hover:text-red-300"
+             >
+                <LogOut className="h-4 w-4 mr-2"/> Disconnect
+             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <Card>
+        {/* Search Bar - Dark Mode */}
+        <Card className="bg-slate-900 border-slate-800">
             <CardContent className="p-4 flex gap-2 items-center">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-slate-500" />
                 <Input 
-                    placeholder="Search passwords..." 
-                    className="border-none shadow-none focus-visible:ring-0"
+                    placeholder="Search encrypted entries..." 
+                    className="border-none shadow-none focus-visible:ring-0 bg-transparent text-white placeholder:text-slate-600"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </CardContent>
         </Card>
 
-        {/* The List (Clean Version without comments in Table) */}
-        <Card className="overflow-hidden">
+        {/* The List (Dark Cyber Table) */}
+        <Card className="overflow-hidden bg-slate-900 border-slate-800 shadow-xl">
           <div className="overflow-x-auto">
             <Table className="min-w-[600px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Site</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Password</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+              <TableHeader className="bg-slate-950">
+                <TableRow className="border-slate-800 hover:bg-slate-900">
+                  <TableHead className="text-cyan-600 font-bold uppercase tracking-wider">Site Identity</TableHead>
+                  <TableHead className="text-cyan-600 font-bold uppercase tracking-wider">Username</TableHead>
+                  <TableHead className="text-cyan-600 font-bold uppercase tracking-wider">Passkey</TableHead>
+                  <TableHead className="text-right text-cyan-600 font-bold uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                   <TableRow><TableCell colSpan={4} className="text-center h-24">Loading Vault...</TableCell></TableRow>
+                   <TableRow className="border-slate-800"><TableCell colSpan={4} className="text-center h-32 text-slate-500">Decrypting Vault...</TableCell></TableRow>
                 ) : filteredItems.length === 0 ? (
-                   <TableRow><TableCell colSpan={4} className="text-center h-24 text-gray-500">No passwords found. Add one!</TableCell></TableRow>
+                   <TableRow className="border-slate-800"><TableCell colSpan={4} className="text-center h-32 text-slate-500">Vault Empty. Initialize new entry.</TableCell></TableRow>
                 ) : (
                   filteredItems.map((item) => {
                       const isRevealed = revealedIds.has(item.id);
@@ -156,30 +167,30 @@ export default function Dashboard() {
                       const username = getDecryptedUsername(item);
 
                       return (
-                      <TableRow key={item.id}>
+                      <TableRow key={item.id} className="border-slate-800 hover:bg-slate-800/50 transition-colors">
                         <TableCell className="font-medium">
                           <div className="flex flex-col">
-                              <span className="text-base">{item.site_name}</span>
-                              <span className="text-xs text-gray-400">{item.site_url}</span>
+                              <span className="text-base text-white">{item.site_name}</span>
+                              <span className="text-xs text-slate-500 font-mono">{item.site_url}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{username}</TableCell>
+                        <TableCell className="text-slate-300">{username}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                              <span className="font-mono text-sm">
+                              <span className={`font-mono text-sm ${isRevealed ? 'text-emerald-400' : 'text-slate-600'}`}>
                                   {isRevealed ? password : "••••••••••••"}
                               </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => copyToClipboard(password)}>
+                              <Button variant="ghost" size="icon" className="hover:bg-cyan-950 hover:text-cyan-400 text-slate-400" onClick={() => copyToClipboard(password)}>
                                   <Copy className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" onClick={() => toggleReveal(item.id)}>
+                              <Button variant="ghost" size="icon" className="hover:bg-purple-950 hover:text-purple-400 text-slate-400" onClick={() => toggleReveal(item.id)}>
                                   {isRevealed ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
                               </Button>
-                              <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={async () => {
+                              <Button variant="ghost" size="icon" className="hover:bg-red-950 hover:text-red-400 text-slate-600" onClick={async () => {
                                   if(confirm("Delete this password?")) {
                                       await supabase.from('vault_items').delete().eq('id', item.id);
                                       fetchVaultItems();
@@ -201,8 +212,6 @@ export default function Dashboard() {
     </div>
   )
 }
-
-
 
 
 
